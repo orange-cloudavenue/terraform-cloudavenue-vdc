@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  IS_MODULE:
+    # The pattern of terraform module name is terraform-cloudavenue-<nameofmodule>.
+    # Detect if it's a module with the presence of the terraform-cloudavenue- keyword in the last part of the path
+    sh: awk -F/ '{print $NF}' <<< $(pwd) | grep -q "terraform-cloudavenue-" && echo "true" || echo "false"
+
+includes: 
+  internal: internal.yml
+
+tasks:
+  # * Init
+  init:
+    desc: Initialize the terraform
+    silent: true
+    cmds:
+      - defer: "echo ✅ Terraform are initialized"
+
+  # * Install
+  install:
+    desc: Install required tools
+    cmds:
+      - for: [
+          hashicorp/tap,
+        ]
+        task: internal:tools:brew:tap
+        vars:
+          APP: '{{.ITEM}}'
+      - for: [
+          hashicorp/tap/terraform,
+          tflint,
+        ]
+        task: internal:tools:brew
+        vars:
+          APP: '{{.ITEM}}'
+      - task: install:module
+  
+  # install:module:
+  #   desc: Install terraform module
+  #   cmds:
+  #     - if: IS_MODULE == "true"
+  #       then:
+  #         - terraform init
+  #       else:
+  #         - echo "This is not a terraform module"
+  
+  # * Lint 
+  lint:
+    desc: Run terraform linters
+    cmds:
+      - for: [
+          tf:fmt,
+          tflint,
+        ]
+        task: lint:{{.ITEM}}
+
+  # * Lint with terraform client
+  lint:tf:fmt:
+    desc: Run terraform fmt
+    internal: true
+    preconditions:
+      - sh: command -v terraform
+        msg: "terraform is not installed. Please run `task install`"
+    cmds:
+      - terraform fmt
+
+  lint:tf:fmt-specific-dir:
+    desc: Run terraform fmt on a specific directory
+    internal: true
+    preconditions:
+      - sh: command -v terraform
+        msg: "terraform is not installed. Please run `task install`"
+    cmds:
+      - find {{.DIRECTORY}} -name "*.tf" -exec terraform fmt {} \;
+
+  # * Lint with tflint
+  lint:tflint:
+    desc: Run tflint
+    internal: true
+    preconditions:
+      - sh: command -v tflint
+        msg: "tflint is not installed. Please run `task install`"
+      - sh: test -f .tflint.hcl
+        msg: "No .tflint.hcl file found."
+    cmds:
+      - tflint
