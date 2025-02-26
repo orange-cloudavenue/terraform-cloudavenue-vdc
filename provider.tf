@@ -3,7 +3,7 @@ terraform {
     # https://registry.terraform.io/providers/orange-cloudavenue/cloudavenue/latest/docs
     cloudavenue = {
       source  = "orange-cloudavenue/cloudavenue"
-      version = "0.27.0"
+      version = ">=0.20.0"
     }
   }
   required_version = ">=1.0"
