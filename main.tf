@@ -19,13 +19,16 @@ resource "cloudavenue_vdc" "vdc" {
 
 # https://registry.terraform.io/providers/orange-cloudavenue/cloudavenue/latest/docs/resources/vdc_acl
 data "cloudavenue_iam_user" "acl_users" {
-  for_each = toset(var.vdc.acl_list)
+  for_each = length(var.vdc.acl_list) > 0 ? toset(var.vdc.acl_list) : []
 
-  name = each.key # Each key is a user email
+  name = each.value # Each key is a user email
 }
 
 # https://registry.terraform.io/providers/orange-cloudavenue/cloudavenue/latest/docs/resources/vdc_acl
 resource "cloudavenue_vdc_acl" "vdc_acl" {
+
+  count = length(var.vdc.acl_list) > 0 ? 1 : 0 # Ne crée la ressource que si acl_list n'est pas vide
+
   vdc = resource.cloudavenue_vdc.vdc.name
   shared_with = [
     for user_email in var.vdc.acl_list : {
