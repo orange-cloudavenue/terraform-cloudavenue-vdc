@@ -1,0 +1,3 @@
+```release-note:feature
+Publish new VDC module for cloudavenue provider.
+```
