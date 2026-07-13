@@ -6,8 +6,8 @@
 name: PR All events
 
 on:
-  pull_request_target:
-    types: [ opened, reopened, synchronize ]
+  pull_request:
+    types: [ opened, reopened, synchronize, edited ]
 
 
 concurrency:
@@ -25,22 +25,27 @@ jobs:
     secrets:
       TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  
-      
-
   pr-size:
+    if: github.event.action != 'edited'
     name: "PR Size"
     uses: orange-cloudavenue/workflows/.github/workflows/pr_label_size.yml@main
+    with:
+      ref: ${{ github.ref }}
+      repository: ${{ github.repository }}
     secrets:
-      TOKEN: ${{ secrets.CHANGELOG_PAT }}
+      TOKEN: ${{ secrets.PR_CI_PAT }}
 
   pr-conventional-commits:
     name: "Conventional Commits"
     uses: orange-cloudavenue/workflows/.github/workflows/pr_conventional_commits.yml@main
     secrets:
-      TOKEN: ${{ secrets.CHANGELOG_PAT }}
+      TOKEN: ${{ secrets.PR_CI_PAT }}
 
   pr-license:
+    if: github.event.action != 'edited' && github.event.pull_request.draft == false
     name: "License Check"
     uses: orange-cloudavenue/workflows/.github/workflows/pr_license.yml@main
+    with:
+      ref: ${{ github.ref }}
+      repository: ${{ github.repository }}
 
